@@ -200,6 +200,12 @@ private struct DiscItems: View {
         }
         Button("Open Disc…") { machine.openDisc() }
         RecentDiscsMenu(machine: machine)
+        Menu("New Disc") {
+            ForEach(ADFSFloppyFormatter.Format.allCases, id: \.self) { f in
+                Button(f.name) { machine.insertBlankDisc(f) }
+            }
+        }
+        .disabled(machine.host == nil)
         Divider()
         Button("Save Disc Changes") { machine.saveDisc() }
             .disabled(!machine.disc.modified || !machine.disc.savable)
