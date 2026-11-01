@@ -28,6 +28,9 @@ struct MachineToolbar: CustomizableToolbarContent {
                 if machine.sessionDiscsActive { machine.insertNextSessionDisc() } else { machine.openDisc() }
             }
             .help(machine.sessionDiscsActive ? "\(machine.nextSessionDiscTitle) (⌥⌘N); hold for the game’s other discs" : "Insert a disc in drive 0; hold for more")
+            // A toolbar menu is built once; rebuild it when the disc changes
+            // so Save and Eject follow it.
+            .id(DiscMenuState(disc: machine.disc, name: machine.discName))
         }
 
         ToolbarItem(id: "hardDisc") {
@@ -215,5 +218,13 @@ private struct DiscItems: View {
             .disabled(machine.discName == nil)
         Divider()
         Button("Show Disc Contents") { machine.showDiscContents(.floppy) }
+    }
+}
+
+/// What the disc button's menu depends on.
+private struct DiscMenuState: Hashable {
+    let modified: Bool, savable: Bool, name: String?
+    init(disc: EmulatorHost.DiscState, name: String?) {
+        modified = disc.modified; savable = disc.savable; self.name = name
     }
 }
