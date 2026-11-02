@@ -269,6 +269,45 @@ final class DAPTests: XCTestCase {
         try client.request("disconnect")
     }
 
+    func testABaselineSnapshotIsSavedThenRestored() throws {
+        let rom = Self.root + "/roms/riscos3_11"
+        guard FileManager.default.fileExists(atPath: rom) else { throw XCTSkip("needs roms/riscos3_11") }
+        let dir = NSTemporaryDirectory() + "dap-\(UUID().uuidString)"
+        defer { try? FileManager.default.removeItem(atPath: dir) }
+        let baseline = dir + "/.vscode/baseline.macarchstate"
+        let host = try RunningHost(rom: rom)
+        defer { host.stop() }
+        func output(_ client: DAPClient) throws -> String {
+            ((try client.event("output")["body"] as? [String: Any])?["output"] as? String) ?? ""
+        }
+        let marker: UInt32 = 0x1_8000 // application memory, past hello's code
+        func peek() throws -> UInt8? { try host.perform { s in s.machine!.memc.debugRead(marker, space: .logical) } }
+
+        // First run: no baseline yet, so it's saved.
+        var client = DAPClient(host: host)
+        try client.request("initialize")
+        var launch = try client.request("launch", ["source": hello, "snapshot": baseline], timeout: 120)
+        XCTAssertEqual(launch["success"] as? Bool, true, "\(launch)")
+        XCTAssertTrue(try output(client).hasPrefix("Assembled hello.s"))
+        XCTAssertTrue(try output(client).hasPrefix("Saved a baseline snapshot to baseline.macarchstate"))
+        XCTAssertTrue(FileManager.default.fileExists(atPath: baseline))
+        try client.request("disconnect")
+
+        let original = try peek()
+        try host.perform { s in _ = s.machine!.memc.debugWrite(marker, ~(original ?? 0), space: .logical) }
+        XCTAssertNotEqual(try peek(), original)
+
+        // Second run: restored from it, so the scribble is gone.
+        client = DAPClient(host: host)
+        try client.request("initialize")
+        launch = try client.request("launch", ["source": hello, "snapshot": baseline], timeout: 120)
+        XCTAssertEqual(launch["success"] as? Bool, true, "\(launch)")
+        XCTAssertTrue(try output(client).hasPrefix("Assembled hello.s"))
+        XCTAssertTrue(try output(client).hasPrefix("Restored the baseline snapshot baseline.macarchstate"))
+        XCTAssertEqual(try peek(), original)
+        try client.request("disconnect")
+    }
+
     func testAssemblyErrorsFailTheLaunch() throws {
         let dir = NSTemporaryDirectory() + "dap-\(UUID().uuidString)"
         try FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)

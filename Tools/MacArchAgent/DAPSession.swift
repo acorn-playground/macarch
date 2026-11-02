@@ -251,8 +251,9 @@ public final class DAPSession: @unchecked Sendable {
     // MARK: Launching
 
     /// launch: source (assembled here), program (+ loadAddress,
-    /// execAddress) or basic, symbols, model, disc, stopOnEntry. attach:
-    /// symbols.
+    /// execAddress) or basic, symbols, model, disc, snapshot (a baseline
+    /// state: restored first if it exists, else saved), stopOnEntry.
+    /// attach: symbols.
     private func launch(_ a: [String: Any], launching: Bool) throws {
         launchArguments = a
         self.launching = launching
@@ -295,15 +296,39 @@ public final class DAPSession: @unchecked Sendable {
         }
         if a["model"] != nil && model == nil { throw DAPError("unknown model \(a["model"]!)") }
         let disc = a["disc"] as? String
+        let baseline = launching ? (a["snapshot"] as? String).map { ($0 as NSString).expandingTildeInPath } : nil
 
-        try machine { s in
-            let d = s.machine!.debugger
-            if launching { d.resume() }
-            if launching, let model, s.machine!.configuration.model != model {
+        let notes = try machine { s -> [String] in
+            var notes: [String] = []
+            if launching { s.machine!.debugger.resume() }
+            // A baseline snapshot: restored at the start of every run, so
+            // each starts from the same machine.
+            var restored = false
+            if let baseline, FileManager.default.fileExists(atPath: baseline) {
+                try Self.restoreBaseline(s, baseline)
+                restored = true
+                notes.append("Restored the baseline snapshot \((baseline as NSString).lastPathComponent)")
+                if let model, s.machine!.configuration.model != model {
+                    notes.append("The baseline is \(s.machine!.configuration.model.displayName), not \(model.displayName): delete it to take a new one")
+                }
+            }
+            if launching, !restored, let model, s.machine!.configuration.model != model {
                 var change = HardwareChange()
                 change.model = model
                 try s.powerCycle(change)
                 _ = runUntilIdle(s, maxSeconds: 60)
+            }
+            // No baseline yet: this machine, as it is now, becomes it (before
+            // `disc` goes in, so rebuilding the disc doesn't spoil it).
+            if let baseline, !restored {
+                let data = s.machine!.snapshot(createdBy: "MacArch debugger baseline")
+                do {
+                    try FileManager.default.createDirectory(atPath: (baseline as NSString).deletingLastPathComponent, withIntermediateDirectories: true)
+                    try Data(data).write(to: URL(fileURLWithPath: baseline), options: .atomic)
+                } catch {
+                    throw DAPError("couldn't save the baseline snapshot to \(baseline): \(error.localizedDescription)")
+                }
+                notes.append("Saved a baseline snapshot to \((baseline as NSString).lastPathComponent) (\(data.count / 1024) KB): later runs start from it")
             }
             if let disc {
                 s.machine!.insertFloppy(try FloppyImage.open(path: disc), drive: 0)
@@ -322,11 +347,33 @@ public final class DAPSession: @unchecked Sendable {
                 s.machine!.debugger.basic.load(basicProgram)
                 s.rewinder.keyframe(s.machine!)
             }
+            return notes
         }
+        for note in notes { output(note + "\n") }
         entry = program?.entry
         if let basicProgram, let basicSource {
             output("Loaded \((basicSource as NSString).lastPathComponent) (\(basicProgram.count) bytes) at PAGE\n")
         }
+    }
+
+    /// Replaces the machine with a baseline snapshot, keeping the
+    /// debugger's breakpoints and symbols. Floppies the snapshot names are
+    /// the ones in the drives if unchanged, or reopened from their paths.
+    static func restoreBaseline(_ s: AgentSession, _ path: String) throws {
+        let m = s.machine!
+        guard let data = FileManager.default.contents(atPath: path) else { throw DAPError("can't read the baseline snapshot \(path)") }
+        let discs = m.fdc.drives.map(\.disc)
+        let n: Machine
+        do {
+            n = try Machine.restore(snapshot: [UInt8](data), rom: m.rom,
+                                    resolveDisc: { d in discs[d.drive].flatMap { $0.sha256 == d.sha256 ? $0 : nil } ?? Machine.reopenDisc(d) },
+                                    hardDiscs: m.hardDiscImages)
+        } catch let e as SnapshotError {
+            throw DAPError("The baseline snapshot \((path as NSString).lastPathComponent) can't be restored: \(e) Delete it to take a new one.")
+        }
+        if let d = m.debuggerIfCreated { n.debugger.adopt(d) }
+        s.rewinder.reset() // a different timeline
+        s.replace(with: n)
     }
 
     /// Reads a BASIC program to run: text (lines with or without numbers),
