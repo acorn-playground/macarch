@@ -56,6 +56,11 @@
     <mediatype>application/x-macarch-state</mediatype>
   </provides>
   <releases>
+    <release version="0.5.4" date="2026-11-02">
+      <description>
+        <p>My Machines, a gallery of named Archimedes; a check box to leave !System, !Scrap and Library off new hard discs; and debugging from a baseline snapshot.</p>
+      </description>
+    </release>
     <release version="0.5.3" date="2026-10-30">
       <description>
         <p>New hard discs get an empty Library, and a machine with a hard disc starts on it (drive 4), so installers such as Acorn C/C++'s find the library.</p>

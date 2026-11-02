@@ -9,6 +9,12 @@ release's section for the GitHub release and Sparkle's update window, and
 won't build a release without one.
 -->
 
+## 0.5.4
+
+- **Debug from a baseline:** VS Code's MacArch debugger can start every run from the same machine. A launch configuration's `snapshot` names a state file: the first run saves the machine there as it is, and every run after restores it before loading your program, keeping your breakpoints. Version 0.2.0 of the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=AcornPlayground.macarch-debug) chooses, switches between and retakes baselines from the Command Palette or the status bar.
+- **New Disc in the toolbar:** the toolbar's Disc menu can put a blank floppy in, as File ▸ New Disc does.
+- **Fix:** the toolbar's Disc menu now follows the disc, so Save and Eject are available once a disc goes in or changes, rather than staying as they were when the window opened.
+
 ## 0.5.3
 
 - **Installers find a library:** new hard discs also get an empty Library directory, and a machine starts on its hard disc (drive 4) once one is fitted, as an owner would have set it with `*Configure Drive 4`. RISC OS then uses the hard disc's Library as the library, so installers that copy their tools into it, such as Acorn C/C++'s, no longer ask for their first disc again and again. A drive you configure yourself is left alone.

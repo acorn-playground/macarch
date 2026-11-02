@@ -7,8 +7,9 @@ line of introduction if wanted, then "- " bullets. Inline Markdown is fine.
 The app shows the sections since the version a user last ran.
 -->
 
-## 0.5.4
+## 0.5.4 — 2 November 2026
 
+- **Debug from a baseline:** the debug adapter (for VS Code and other DAP clients) can start every run from the same machine. A launch configuration's `snapshot` names a state file: the first run saves the machine there, and every run after restores it before loading the program, keeping its breakpoints.
 - **My Machines:** a gallery of Archimedes kept with names (the main menu's My Machines, Ctrl+Shift+Alt+K, or the setup page's My Machines button). **Create Machine…** sets one up from scratch: model, processor, memory, monitor, a ROM that suits it, and hard discs, new or ones you have. Machine ▸ **Save to My Machines…** keeps the one you're using. Double-click one to start it in its own window, as you left it, RISC OS's settings included; Machine ▸ Update in My Machines saves hardware changes back. Rename, duplicate, export, show or bin them by right-clicking, and **Import Machine…** adds machine configuration files.
 - **!System, !Scrap and Library, or not:** New Hard Disc… and New Hard Disc from Files… have a check box to leave them off a new hard disc.
 - **Fix:** an imported machine configuration whose CMOS settings are missing, or were never set up, now starts with RISC OS's defaults, rather than at the `*` prompt in a black and white screen mode.
