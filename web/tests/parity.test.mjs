@@ -9,7 +9,6 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { ArcModule, ArcError } from '../src/arc-wasm.js';
 
@@ -90,7 +89,7 @@ test('machines are independent, and creating and releasing them does not grow me
 });
 
 const romPath = process.env.MACARCH_TEST_ROM ?? path.join(repo, 'roms/arclibre.rom');
-const zarchPath = process.env.MACARCH_TEST_ZARCH ?? path.join(os.homedir(), 'code/macarc/top25/Zarch (1987)(Superior Software).adf');
+const zarchPath = process.env.MACARCH_TEST_ZARCH ?? path.join(repo, 'top25/Zarch (1987)(Superior Software).adf');
 const haveZarch = fs.existsSync(romPath) && fs.existsSync(zarchPath);
 
 test('Zarch launches with the same frames as native', { skip: !haveZarch && 'needs a RISC OS ROM and the Zarch disc' }, () => {

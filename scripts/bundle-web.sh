@@ -4,7 +4,7 @@
 # a manifest the page reads at startup.
 #
 #   scripts/bundle-web.sh <rom> <game id> <disc>...
-#   scripts/bundle-web.sh roms/arclibre.rom zarch "~/code/macarc/top25/Zarch (1987)(Superior Software).adf"
+#   scripts/bundle-web.sh roms/arclibre.rom zarch "top25/Zarch (1987)(Superior Software).adf"
 #
 # ROMs and commercial discs are generally not yours to redistribute: keep
 # the bundle on your own machine unless you know you may share them.

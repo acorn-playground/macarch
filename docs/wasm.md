@@ -25,7 +25,7 @@ no second emulator: JavaScript only supplies time, input, files and a screen.
 ```sh
 scripts/build-wasm.sh                       # -> web/public/archimedes.wasm
 scripts/bundle-web.sh roms/arclibre.rom zarch \
-    ~/code/macarc/top25/"Zarch (1987)(Superior Software).adf"   # -> web/public/bundled/ (local only)
+    top25/"Zarch (1987)(Superior Software).adf"                 # -> web/public/bundled/ (local only)
 node web/serve.mjs                           # http://localhost:8080/
 ```
 

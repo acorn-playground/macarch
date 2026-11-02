@@ -121,7 +121,7 @@ final class EmbeddedMachineTests: XCTestCase {
     static let romPath = ProcessInfo.processInfo.environment["MACARCH_TEST_ROM"]
         ?? URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent("../../../../roms/arclibre.rom").standardized.path
     static let zarchPath = ProcessInfo.processInfo.environment["MACARCH_TEST_ZARCH"]
-        ?? NSString(string: "~/code/macarc/top25/Zarch (1987)(Superior Software).adf").expandingTildeInPath
+        ?? URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent("../../../../top25/Zarch (1987)(Superior Software).adf").standardized.path
     static let cataloguePath = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
         .appendingPathComponent("../../../../Apps/MacArch/Resources/Classics/classics.json").standardized.path
 
